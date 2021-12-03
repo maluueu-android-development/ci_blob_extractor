@@ -1,0 +1,38 @@
+name: Extract blobs from given ROM (usually a ZIP file)
+on: 
+  workflow_dispatch:
+    inputs:
+      URLinput:
+        description: 'Download URL to the ROM (usually a ZIP file)'
+        required: true
+        default: ''
+
+jobs:
+  extract:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Print the download URL
+        run: |
+          echo "Download URL: ${{ github.event.inputs.URLinput }}"
+
+      - name: Update and upgrade runner
+        run: sudo apt update && sudo apt dist-upgrade -y
+
+      - name: Clone extract tools
+        run: |
+          mkdir -p /tmp/dump/
+          git clone https://github.com/maluueu/dumpyara /tmp/dump/ -b master
+
+      - name: Install extract tools
+        working-directory: /tmp/dump/
+        run: |
+          sudo apt install python3-setuptools
+          sudo bash setup.sh
+
+      - name: Extract
+        env:
+          URL: ${{ github.event.inputs.URLinput }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        working-directory: /tmp/dump/
+        run: sudo bash dumpyara.sh $URL $GH_TOKEN
